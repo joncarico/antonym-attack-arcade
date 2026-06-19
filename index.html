@@ -32,6 +32,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            min-height: 110dvh;
             overflow-x: hidden;
             padding: 10px;
         }
@@ -508,30 +509,47 @@
         let elapsedRoundSeconds = 0.0;
         let elapsedStackSeconds = 0.0;
 
-        // Pre-loaded benchmarks mimicking standard performance targets
+        // Base benchmarks mimicking an elite baseline pace per word
         const SYSTEM_DEFAULT_BENCHMARKS = [
-            { initials: "TOM", time: 48.2 },
-            { initials: "JED", time: 55.4 },
-            { initials: "ANN", time: 61.0 },
-            { initials: "LIZ", time: 66.8 },
-            { initials: "BOB", time: 72.3 },
-            { initials: "MAX", time: 78.5 },
-            { initials: "KAY", time: 84.1 },
-            { initials: "ALX", time: 90.4 },
-            { initials: "SAM", time: 99.2 },
-            { initials: "VIC", time: 112.5 }
+            { initials: "AAA", baseTimePerWord: 1.8 },
+            { initials: "ACE", baseTimePerWord: 2.1 },
+            { initials: "BOB", baseTimePerWord: 2.4 },
+            { initials: "POO", baseTimePerWord: 2.6 },
+            { initials: "CPU", baseTimePerWord: 2.8 },
+            { initials: "OCD", baseTimePerWord: 3.1 },
+            { initials: "MAX", baseTimePerWord: 3.4 },
+            { initials: "FLY", baseTimePerWord: 3.7 },
+            { initials: "BOT", baseTimePerWord: 4.0 },
+            { initials: "ZAP", baseTimePerWord: 4.5 }
         ];
 
-        // Seed Default Highscore lists inside engine initialization stage
+        // Generates and saves level-scaled benchmarks dynamically
         function seedLeaderboardsIfEmpty() {
             for (let l = 1; l <= 12; l++) {
                 if (!localStorage.getItem(`antonym_arcade_lvl_${l}`)) {
-                    let randomizedList = SYSTEM_DEFAULT_BENCHMARKS.map(item => ({
-                        initials: item.initials,
-                        time: parseFloat((item.time + (Math.random() * 8.5)).toFixed(1))
-                    }));
-                    randomizedList.sort((a, b) => a.time - b.time);
-                    localStorage.setItem(`antonym_arcade_lvl_${l}`, JSON.stringify(randomizedList));
+                    
+                    // Higher reading levels increase cognitive load/processing time per word
+                    // Level 1 modifier = 1.0x, Level 12 modifier = ~2.1x
+                    const levelDifficultyMultiplier = 1.0 + ((l - 1) * 0.1); 
+                    const totalWordsInStack = 25;
+        
+                    let levelScaledList = SYSTEM_DEFAULT_BENCHMARKS.map(item => {
+                        // Calculate total time for 25 words at this specific difficulty tier
+                        let calculatedTime = item.baseTimePerWord * totalWordsInStack * levelDifficultyMultiplier;
+                        
+                        // Introduce a small raw variation to look organic on the leaderboard
+                        let organicVariance = (Math.random() * 4.2) - 2.1; 
+                        let finalScoreTime = parseFloat((calculatedTime + organicVariance).toFixed(1));
+        
+                        return {
+                            initials: item.initials,
+                            time: finalScoreTime
+                        };
+                    });
+        
+                    // Sort ascending (lowest execution times first)
+                    levelScaledList.sort((a, b) => a.time - b.time);
+                    localStorage.setItem(`antonym_arcade_lvl_${l}`, JSON.stringify(levelScaledList));
                 }
             }
         }
