@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANTONYM ATTACK: Arcade Edition</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --panel-color: #111122;
+            --border-color: #ffd700;
+            --text-primary: #ffffff;
+            --text-accent: #33ff33;
+            --text-warn: #ff3333;
+            --neon-blue: #00ffff;
+            --neon-pink: #ff00ff;
+            --font-stack: 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-stack);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 10px;
+        }
+
+        #arcade-cabinet {
+            width: 100%;
+            max-width: 800px;
+            background: var(--panel-color);
+            border: 4px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 15px rgba(0, 255, 255, 0.2);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 3px dashed var(--neon-pink);
+            padding-bottom: 15px;
+        }
+
+        h1.marquee {
+            font-size: 2.2rem;
+            color: var(--border-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 3px 3px 0px var(--neon-pink);
+            margin-bottom: 10px;
+        }
+
+        .hud {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            background: #000;
+            padding: 10px;
+            border: 2px solid var(--neon-blue);
+            border-radius: 4px;
+        }
+
+        @media (min-width: 600px) {
+            .hud {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .hud-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hud-label {
+            font-size: 0.75rem;
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .hud-val {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--text-accent);
+        }
+
+        main {
+            min-height: 340px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .screen-view {
+            display: none;
+            width: 100%;
+        }
+
+        .screen-view.active {
+            display: block;
+        }
+
+        .target-wrapper {
+            text-align: center;
+            margin-bottom: 25px;
+            background: #050515;
+            padding: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .target-label {
+            font-size: 0.9rem;
+            color: var(--neon-pink);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .target-word {
+            font-size: 3rem;
+            color: #fff;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--border-color);
+        }
+
+        .game-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        @media (min-width: 600px) {
+            .options-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .option-label {
+            background: #000;
+            border: 2px solid var(--neon-blue);
+            border-radius: 6px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+        }
+
+        .option-label:hover,
+        .option-label:focus-within {
+            border-color: var(--border-color);
+            background: #0a0a20;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+        }
+
+        .option-label input[type="radio"] {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--neon-pink);
+            border-radius: 50%;
+            outline: none;
+            position: relative;
+        }
+
+        .option-label input[type="radio"]:checked::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 8px;
+            height: 8px;
+            background: var(--text-accent);
+            border-radius: 50%;
+        }
+
+        .option-label input[type="radio"]:focus-visible {
+            outline: 2px solid var(--border-color);
+            outline-offset: 3px;
+        }
+
+        .btn {
+            background: var(--border-color);
+            color: #000;
+            font-family: var(--font-stack);
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover,
+        .btn:focus-visible {
+            background: #ffea70;
+            outline: 3px solid var(--text-primary);
+        }
+
+        /* Flash Feedback Layout */
+        .feedback-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 10;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 30px;
+            border-radius: 8px;
+        }
+
+        .feedback-overlay.flash-correct {
+            display: flex;
+            background: rgba(0, 40, 0, 0.95);
+            border: 4px solid var(--text-accent);
+        }
+
+        .feedback-overlay.flash-incorrect {
+            display: flex;
+            background: rgba(40, 0, 0, 0.95);
+            border: 4px solid var(--text-warn);
+        }
+
+        .feedback-title {
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        .flash-correct .feedback-title {
+            color: var(--text-accent);
+        }
+
+        .flash-incorrect .feedback-title {
+            color: var(--text-warn);
+        }
+
+        .feedback-desc {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            max-width: 500px;
+        }
+
+        /* Leaderboard and Screens */
+        .board-title {
+            color: var(--neon-pink);
+            text-align: center;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #000;
+            margin-bottom: 20px;
+        }
+
+        .leaderboard-table th,
+        .leaderboard-table td {
+            border: 1px solid #222244;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .leaderboard-table th {
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        .leaderboard-table tr:nth-child(even) {
+            background: #050510;
+        }
+
+        .arcade-input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            background: #050515;
+            padding: 20px;
+            border: 2px dashed var(--border-color);
+            border-radius: 6px;
+        }
+
+        .initials-input {
+            background: #000;
+            border: 2px solid var(--neon-pink);
+            color: var(--text-accent);
+            font-family: var(--font-stack);
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            text-align: center;
+            width: 120px;
+            letter-spacing: 6px;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .initials-input:focus {
+            outline: none;
+            border-color: var(--border-color);
+            box-shadow: 0 0 10px var(--border-color);
+        }
+
+        .level-select-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 600px) {
+            .level-select-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .btn-lvl {
+            background: #0a0a20;
+            border: 2px solid var(--neon-blue);
+            color: var(--neon-blue);
+            font-family: var(--font-stack);
+            padding: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        .btn-lvl:hover,
+        .btn-lvl:focus-visible {
+            background: var(--neon-blue);
+            color: #000;
+            outline: none;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="arcade-cabinet">
+        <div id="aria-announcer" class="sr-only" aria-live="assertive"></div>
+
+        <header>
+            <h1 class="marquee">Antonym Attack</h1>
+            <div class="hud">
+                <div class="hud-card">
+                    <span class="hud-label">Level Stack</span>
+                    <span id="hud-level" class="hud-val">1</span>
+                </div>
+                <div class="hud-card">
+                    <span class="hud-label">Stack Progress</span>
+                    <span id="hud-progress" class="hud-val">0 / 25</span>
+                </div>
+                <div class="hud-card">
+                    <span class="hud-label">Round Time</span>
+                    <span id="hud-round-time" class="hud-val">0.0s</span>
+                </div>
+                <div class="hud-card">
+                    <span class="hud-label">Stack Time</span>
+                    <span id="hud-stack-time" class="hud-val">0.0s</span>
+                </div>
+            </div>
+        </header>
+
+        <div id="feedback-panel" class="feedback-overlay" role="alert" aria-hidden="true">
+            <h2 id="feedback-msg-title" class="feedback-title"></h2>
+            <p id="feedback-msg-desc" class="feedback-desc"></p>
+        </div>
+
+        <main id="screen-manager">
+
+            <section id="view-level-select" class="screen-view active">
+                <h2 class="board-title">Select Insertion Level</h2>
+                <div class="level-select-grid" role="group" aria-label="Reading Levels">
+                    <script>
+                        for (let i = 1; i <= 12; i++) {
+                            document.write(`<button class="btn-lvl" onclick="initiateLevel(${i})">LVL ${i}</button>`);
+                        }
+                    </script>
+                </div>
+                <button class="btn" onclick="showGlobalLeaderboards()">View High Scores</button>
+            </section>
+
+            <section id="view-arena" class="screen-view">
+                <div class="target-wrapper">
+                    <div class="target-label">Find the Antonym</div>
+                    <h2 id="current-target-word" class="target-word">---</h2>
+                </div>
+
+                <form id="arena-form" class="game-form" onsubmit="evaluateSubmission(event)">
+                    <fieldset style="border:none;">
+                        <legend class="sr-only">Select the correct antonym choice below</legend>
+                        <div id="options-box" class="options-grid">
+                        </div>
+                    </fieldset>
+                    <button type="submit" class="btn" style="margin-top: 10px;">Fire Missile (Submit)</button>
+                </form>
+            </section>
+
+            <section id="view-registry" class="screen-view">
+                <h2 class="board-title" style="color: var(--text-accent);">Level Completed!</h2>
+                <div class="arcade-input-container">
+                    <p style="text-align: center; line-height: 1.4;">You cleared the stack!<br>Enter your Initials for
+                        the Leaderboard:</p>
+                    <input type="text" id="player-initials" class="initials-input" maxlength="3" placeholder="AAA"
+                        aria-label="Three character initials">
+                    <button class="btn" onclick="commitRegistryScore()">Log Initials</button>
+                </div>
+            </section>
+
+            <section id="view-leaderboard" class="screen-view">
+                <h2 id="leaderboard-view-title" class="board-title">Leaderboard</h2>
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Rank</th>
+                            <th scope="col">Initials</th>
+                            <th scope="col">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-rows">
+                    </tbody>
+                </table>
+                <button class="btn" onclick="exitToMainMenu()">Main Menu</button>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        // Matrix Array Parsing of the Data Set
+        const VOCABULARY_DATASET = [
+            ["Big", 1, "Small", "Large", "Huge", "Great", "Grand", "Vast"], ["Hot", 1, "Cold", "Warm", "Heated", "Toasty", "Searing", "Burning"], ["Up", 1, "Down", "High", "Aloft", "Raised", "Elevated", "Lofted"], ["Fast", 1, "Slow", "Quick", "Rapid", "Swift", "Fleet", "Speedy"], ["Wet", 1, "Dry", "Damp", "Moist", "Soaked", "Drenched", "Soggy"], ["Happy", 1, "Sad", "Glad", "Joyful", "Cheerful", "Merry", "Bright"], ["Day", 1, "Night", "Dawn", "Noon", "Daytime", "Daylight", "Morn"], ["Go", 1, "Stop", "Move", "Run", "Walk", "Proceed", "Advance"], ["In", 1, "Out", "Inside", "Within", "Inward", "Into", "Interior"], ["New", 1, "Old", "Fresh", "Modern", "Recent", "Novel", "Current"], ["Good", 1, "Bad", "Fine", "Nice", "Fair", "Choice", "Prime"], ["Yes", 1, "No", "Sure", "True", "Okay", "Affirmative", "Indeed"], ["Soft", 1, "Hard", "Mild", "Tender", "Gentle", "Smooth", "Fluffy"], ["Light", 1, "Dark", "Bright", "Clear", "Radiant", "Luminous", "Glowing"], ["Boy", 1, "Girl", "Lad", "Youth", "Child", "Kid", "Son"], ["Run", 1, "Walk", "Dash", "Sprint", "Race", "Jog", "Bolt"], ["Cry", 1, "Laugh", "Weep", "Sob", "Wail", "Bawl", "Whimper"], ["Open", 1, "Shut", "Clear", "Free", "Unlocked", "Exposed", "Public"], ["Clean", 1, "Dirty", "Neat", "Pure", "Fresh", "Spotless", "Tidy"], ["Sit", 1, "Stand", "Rest", "Perch", "Settle", "Squat", "Lounge"], ["Love", 1, "Hate", "Like", "Adore", "Cherish", "Prize", "Treasure"], ["Tall", 1, "Short", "High", "Lofty", "Towering", "Soaring", "Elevated"], ["Far", 1, "Near", "Distant", "Remote", "Away", "Yonder", "Isolated"], ["Rich", 1, "Poor", "Wealthy", "Loaded", "Flush", "Prosperous", "Well-off"], ["Heavy", 1, "Light", "Weighty", "Hefty", "Massive", "Burdensome", "Bulky"],
+            ["Smart", 2, "Dumb", "Clever", "Bright", "Sharp", "Wise", "Intelligent"], ["Quick", 2, "Slow", "Rapid", "Swift", "Fleet", "Speedy", "Prompt"], ["Large", 2, "Small", "Huge", "Great", "Grand", "Vast", "Immense"], ["Bright", 2, "Dark", "Clear", "Radiant", "Luminous", "Glowing", "Brilliant"], ["Quiet", 2, "Loud", "Silent", "Still", "Calm", "Peaceful", "Serene"], ["Brave", 2, "Afraid", "Bold", "Fearless", "Courageous", "Valiant", "Intrepid"], ["Wrong", 2, "Right", "False", "Faulty", "Flawed", "Incorrect", "Untrue"], ["Early", 2, "Late", "Soon", "Timely", "Prompt", "Forward", "Advanced"], ["Sweet", 2, "Sour", "Sugary", "Honeyed", "Dulcet", "Pleasant", "Amiable"], ["Sharp", 2, "Dull", "Keen", "Acute", "Pointed", "Edged", "Piercing"], ["Smooth", 2, "Rough", "Even", "Level", "Flat", "Slick", "Polished"], ["Empty", 2, "Full", "Blank", "Bare", "Vacant", "Void", "Hollow"], ["Hard", 2, "Soft", "Firm", "Solid", "Rigid", "Tough", "Strong"], ["Weak", 2, "Strong", "Frail", "Faint", "Feeble", "Fragile", "Infirm"], ["Tame", 2, "Wild", "Gentle", "Mild", "Docile", "Meek", "Subdued"], ["Tight", 2, "Loose", "Firm", "Taut", "Secure", "Fast", "Snug"], ["Deep", 2, "Shallow", "Bottomless", "Profound", "Extreme", "Intense", "Abysmal"], ["Broad", 2, "Narrow", "Wide", "Vast", "Spacious", "Extensive", "Ample"], ["Cool", 2, "Warm", "Chilly", "Frigid", "Frosty", "Refreshing", "Algid"], ["Mad", 2, "Glad", "Angry", "Cross", "Furious", "Irate", "Incensed"], ["Safe", 2, "Danger", "Secure", "Guarded", "Shielded", "Protected", "Harmless"], ["Thick", 2, "Thin", "Dense", "Heavy", "Solid", "Pack-tight", "Compact"], ["Fair", 2, "Mean", "Just", "Equal", "Honest", "Direct", "Candid"], ["Kind", 2, "Cruel", "Gentle", "Mild", "Tender", "Benign", "Gracious"], ["Proud", 2, "Humble", "Grand", "Lofty", "Noble", "Lordly", "Arrogant"],
+            ["Clever", 3, "Stupid", "Shrewd", "Astute", "Sharp", "Crafty", "Cunning"], ["Rapid", 3, "Sluggish", "Swift", "Fleet", "Speedy", "Prompt", "Quick"], ["Huge", 3, "Tiny", "Vast", "Immense", "Enormous", "Massive", "Gigantic"], ["Silent", 3, "Noisy", "Still", "Calm", "Peaceful", "Serene", "Placid"], ["Bold", 3, "Timid", "Fearless", "Courageous", "Valiant", "Intrepid", "Daring"], ["False", 3, "True", "Faulty", "Flawed", "Incorrect", "Untrue", "Erroneous"], ["Prompt", 3, "Tardy", "Early", "Timely", "Forward", "Advanced", "Punctual"], ["Gentle", 3, "Harsh", "Mild", "Docile", "Meek", "Subdued", "Placid"], ["Keen", 3, "Blunt", "Acute", "Pointed", "Edged", "Piercing", "Incisive"], ["Even", 3, "Rough", "Level", "Flat", "Slick", "Polished", "Uniform"], ["Vacant", 3, "Full", "Blank", "Bare", "Void", "Hollow", "Empty"], ["Firm", 3, "Flabby", "Solid", "Rigid", "Tough", "Strong", "Secure"], ["Frail", 3, "Robust", "Faint", "Feeble", "Fragile", "Infirm", "Delicate"], ["Taut", 3, "Slack", "Tight", "Secure", "Fast", "Snug", "Stretched"], ["Wide", 3, "Narrow", "Vast", "Spacious", "Extensive", "Ample", "Broad"], ["Chilly", 3, "Toasty", "Frigid", "Frosty", "Algid", "Bitter", "Biting"], ["Angry", 3, "Calm", "Cross", "Furious", "Irate", "Incensed", "Enraged"], ["Secure", 3, "Unsafe", "Guarded", "Shielded", "Protected", "Harmless", "Certain"], ["Dense", 3, "Sparse", "Heavy", "Solid", "Compact", "Thick", "Concentrated"], ["Just", 3, "Unfair", "Equal", "Honest", "Direct", "Candid", "Equitable"], ["Noble", 3, "Lowly", "Grand", "Lofty", "Lordly", "Arrogant", "Exalted"], ["Grand", 3, "Humble", "Lofty", "Lordly", "Arrogant", "Exalted", "Majestic"], ["Vast", 3, "Small", "Immense", "Enormous", "Massive", "Gigantic", "Colossal"], ["Harsh", 3, "Mild", "Severe", "Stern", "Strict", "Rigid", "Austere"], ["Grave", 3, "Silly", "Serious", "Solemn", "Earnest", "Somber", "Severe"],
+            ["Shrewd", 4, "Foolish", "Astute", "Sharp", "Crafty", "Cunning", "Discerning"], ["Swift", 4, "Sluggish", "Fleet", "Speedy", "Prompt", "Quick", "Rapid"], ["Immense", 4, "Minute", "Enormous", "Massive", "Gigantic", "Colossal", "Mammoth"], ["Still", 4, "Active", "Calm", "Peaceful", "Serene", "Placid", "Tranquil"], ["Fearless", 4, "Cowardly", "Courageous", "Valiant", "Intrepid", "Daring", "Audacious"], ["Faulty", 4, "Perfect", "Flawed", "Incorrect", "Untrue", "Erroneous", "Defective"], ["Timely", 4, "Delayed", "Prompt", "Forward", "Advanced", "Punctual", "Seasonable"], ["Mild", 4, "Extreme", "Docile", "Meek", "Subdued", "Placid", "Serene"], ["Acute", 4, "Obtuse", "Pointed", "Edged", "Piercing", "Incisive", "Penetrating"], ["Level", 4, "Slanted", "Flat", "Slick", "Polished", "Uniform", "Horizontal"], ["Blank", 4, "Filled", "Bare", "Void", "Hollow", "Empty", "Vacant"], ["Solid", 4, "Liquid", "Rigid", "Tough", "Strong", "Secure", "Firm"], ["Faint", 4, "Strong", "Feeble", "Fragile", "Infirm", "Delicate", "Weak"], ["Tight", 4, "Loose", "Secure", "Fast", "Snug", "Stretched", "Taut"], ["Spacious", 4, "Cramped", "Extensive", "Ample", "Broad", "Wide", "Roomy"], ["Frigid", 4, "Torrid", "Frosty", "Algid", "Bitter", "Biting", "Gelid"], ["Cross", 4, "Pleasant", "Furious", "Irate", "Incensed", "Enraged", "Angered"], ["Guarded", 4, "Open", "Shielded", "Protected", "Harmless", "Certain", "Secure"], ["Heavy", 4, "Light", "Solid", "Compact", "Thick", "Concentrated", "Dense"], ["Equal", 4, "Biased", "Honest", "Direct", "Candid", "Equitable", "Fair"], ["Lofty", 4, "Modest", "Lordly", "Arrogant", "Exalted", "Majestic", "Sublime"], ["Lordly", 4, "Meek", "Arrogant", "Exalted", "Majestic", "Sublime", "Imperious"], ["Enormous", 4, "Tiny", "Massive", "Gigantic", "Colossal", "Mammoth", "Huge"], ["Severe", 4, "Gentle", "Stern", "Strict", "Rigid", "Austere", "Harsh"], ["Serious", 4, "Playful", "Solemn", "Earnest", "Somber", "Severe", "Grave"],
+            ["Astute", 5, "Naive", "Sharp", "Crafty", "Cunning", "Discerning", "Sagacious"], ["Fleet", 5, "Plodding", "Speedy", "Prompt", "Quick", "Rapid", "Swift"], ["Enormous", 5, "Infinitesimal", "Massive", "Gigantic", "Colossal", "Mammoth", "Tremendous"], ["Calm", 5, "Agitated", "Peaceful", "Serene", "Placid", "Tranquil", "Untroubled"], ["Courageous", 5, "Craven", "Valiant", "Intrepid", "Daring", "Audacious", "Dauntless"], ["Flawed", 5, "Flawless", "Incorrect", "Untrue", "Erroneous", "Defective", "Faulty"], ["Forward", 5, "Backward", "Advanced", "Punctual", "Seasonable", "Timely", "Progressive"], ["Docile", 5, "Unruly", "Meek", "Subdued", "Placid", "Serene", "Compliant"], ["Pointed", 5, "Blunt", "Edged", "Piercing", "Incisive", "Penetrating", "Sharp"], ["Flat", 5, "Uneven", "Slick", "Polished", "Uniform", "Horizontal", "Level"], ["Bare", 5, "Covered", "Void", "Hollow", "Empty", "Vacant", "Blank"], ["Rigid", 5, "Flexible", "Tough", "Strong", "Secure", "Firm", "Solid"], ["Feeble", 5, "Potent", "Fragile", "Infirm", "Delicate", "Weak", "Faint"], ["Secure", 5, "Risky", "Fast", "Snug", "Stretched", "Taut", "Tight"], ["Extensive", 5, "Limited", "Ample", "Broad", "Wide", "Roomy", "Spacious"], ["Frosty", 5, "Tropical", "Algid", "Bitter", "Biting", "Gelid", "Icy"], ["Furious", 5, "Serene", "Irate", "Incensed", "Enraged", "Angered", "Wrathful"], ["Shielded", 5, "Exposed", "Protected", "Harmless", "Certain", "Secure", "Guarded"], ["Solid", 5, "Porous", "Compact", "Thick", "Concentrated", "Dense", "Heavy"], ["Honest", 5, "Deceitful", "Direct", "Candid", "Equitable", "Fair", "Just"], ["Arrogant", 5, "Humble", "Exalted", "Majestic", "Sublime", "Imperious", "Haughty"], ["Exalted", 5, "Debased", "Majestic", "Sublime", "Imperious", "Haughty", "Noble"], ["Massive", 5, "Minute", "Gigantic", "Colossal", "Mammoth", "Huge", "Enormous"], ["Stern", 5, "Lenient", "Strict", "Rigid", "Austere", "Harsh", "Severe"], ["Solemn", 5, "Joyous", "Earnest", "Somber", "Severe", "Grave", "Serious"],
+            ["Sharp", 6, "Dull", "Crafty", "Cunning", "Discerning", "Sagacious", "Perspicacious"], ["Speedy", 6, "Lethargic", "Prompt", "Quick", "Rapid", "Swift", "Fleet"], ["Massive", 6, "Microscopic", "Gigantic", "Colossal", "Mammoth", "Tremendous", "Prodigious"], ["Peaceful", 6, "Turbulent", "Serene", "Placid", "Tranquil", "Untroubled", "Placid"], ["Valiant", 6, "Timorous", "Intrepid", "Daring", "Audacious", "Dauntless", "Resolute"], ["Incorrect", 6, "Accurate", "Untrue", "Erroneous", "Defective", "Faulty", "Flawed"], ["Advanced", 6, "Rudimentary", "Punctual", "Seasonable", "Timely", "Progressive", "Forward"], ["Meek", 6, "Arrogant", "Subdued", "Placid", "Serene", "Compliant", "Submissive"], ["Edged", 6, "Round", "Piercing", "Incisive", "Penetrating", "Sharp", "Acute"], ["Slick", 6, "Coarse", "Polished", "Uniform", "Horizontal", "Level", "Flat"], ["Void", 6, "Teeming", "Hollow", "Empty", "Vacant", "Blank", "Bare"], ["Tough", 6, "Fragile", "Strong", "Secure", "Firm", "Solid", "Rigid"], ["Fragile", 6, "Sturdy", "Infirm", "Delicate", "Weak", "Faint", "Feeble"], ["Fast", 6, "Loose", "Snug", "Stretched", "Taut", "Tight", "Secure"], ["Ample", 6, "Scant", "Broad", "Wide", "Roomy", "Spacious", "Extensive"], ["Algid", 6, "Sweltering", "Bitter", "Biting", "Gelid", "Icy", "Frigid"], ["Irate", 6, "Placated", "Incensed", "Enraged", "Angered", "Wrathful", "Infuriated"], ["Protected", 6, "Vulnerable", "Harmless", "Certain", "Secure", "Guarded", "Shielded"], ["Compact", 6, "Loose", "Thick", "Concentrated", "Dense", "Heavy", "Solid"], ["Direct", 6, "Evasive", "Candid", "Equitable", "Fair", "Just", "Honest"], ["Majestic", 6, "Lowly", "Sublime", "Imperious", "Haughty", "Proud", "Arrogant"], ["Sublime", 6, "Base", "Imperious", "Haughty", "Proud", "Arrogant", "Exalted"], ["Gigantic", 6, "Petty", "Colossal", "Mammoth", "Huge", "Enormous", "Massive"], ["Strict", 6, "Lax", "Rigid", "Austere", "Harsh", "Severe", "Stern"], ["Earnest", 6, "Frivolous", "Somber", "Severe", "Grave", "Serious", "Solemn"],
+            ["Crafty", 7, "Honest", "Cunning", "Discerning", "Sagacious", "Perspicacious", "Astute"], ["Prompt", 7, "Tardy", "Quick", "Rapid", "Swift", "Fleet", "Speedy"], ["Gigantic", 7, "Miniscule", "Colossal", "Mammoth", "Tremendous", "Prodigious", "Immense"], ["Serene", 7, "Chaotic", "Placid", "Tranquil", "Untroubled", "Placid", "Calm"], ["Intrepid", 7, "Cowardly", "Daring", "Audacious", "Dauntless", "Resolute", "Valiant"], ["Untrue", 7, "Veritable", "Erroneous", "Defective", "Faulty", "Flawed", "Incorrect"], ["Punctual", 7, "Dilatory", "Seasonable", "Timely", "Progressive", "Forward", "Advanced"], ["Subdued", 7, "Exuberant", "Placid", "Serene", "Compliant", "Submissive", "Meek"], ["Piercing", 7, "Dull", "Incisive", "Penetrating", "Sharp", "Acute", "Edged"], ["Polished", 7, "Unrefined", "Uniform", "Horizontal", "Level", "Flat", "Slick"], ["Hollow", 7, "Solid", "Empty", "Vacant", "Blank", "Bare", "Void"], ["Strong", 7, "Impotent", "Secure", "Firm", "Solid", "Rigid", "Tough"], ["Infirm", 7, "Healthy", "Delicate", "Weak", "Faint", "Feeble", "Fragile"], ["Snug", 7, "Loose", "Stretched", "Taut", "Tight", "Secure", "Fast"], ["Broad", 7, "Confined", "Wide", "Roomy", "Spacious", "Extensive", "Ample"], ["Bitter", 7, "Mild", "Biting", "Gelid", "Icy", "Frigid", "Algid"], ["Incensed", 7, "Appreased", "Enraged", "Angered", "Wrathful", "Infuriated", "Irate"], ["Harmless", 7, "Noxious", "Certain", "Secure", "Guarded", "Shielded", "Protected"], ["Thick", 7, "Sparse", "Concentrated", "Dense", "Heavy", "Solid", "Compact"], ["Candid", 7, "Devious", "Equitable", "Fair", "Just", "Honest", "Direct"], ["Imperious", 7, "Submissive", "Haughty", "Proud", "Arrogant", "Exalted", "Majestic"], ["Haughty", 7, "Modest", "Proud", "Arrogant", "Exalted", "Majestic", "Sublime"], ["Colossal", 7, "Pygmy", "Mammoth", "Huge", "Enormous", "Massive", "Gigantic"], ["Rigid", 7, "Yielding", "Austere", "Harsh", "Severe", "Stern", "Strict"], ["Somber", 7, "Cheerful", "Severe", "Grave", "Serious", "Solemn", "Earnest"],
+            ["Cunning", 8, "Guileless", "Discerning", "Sagacious", "Perspicacious", "Astute", "Sharp"], ["Quick", 8, "Inert", "Rapid", "Swift", "Fleet", "Speedy", "Prompt"], ["Colossal", 8, "Microscopic", "Mammoth", "Tremendous", "Prodigious", "Immense", "Enormous"], ["Placid", 8, "Frenetic", "Tranquil", "Untroubled", "Placid", "Calm", "Peaceful"], ["Daring", 8, "Craven", "Audacious", "Dauntless", "Resolute", "Valiant", "Intrepid"], ["Erroneous", 8, "Flawless", "Defective", "Faulty", "Flawed", "Incorrect", "Untrue"], ["Seasonable", 8, "Unfit", "Timely", "Progressive", "Forward", "Advanced", "Punctual"], ["Placid", 8, "Agitated", "Serene", "Compliant", "Submissive", "Meek", "Subdued"], ["Incisive", 8, "Shallow", "Penetrating", "Sharp", "Acute", "Edged", "Piercing"], ["Uniform", 8, "Varied", "Horizontal", "Level", "Flat", "Slick", "Polished"], ["Empty", 8, "Crowded", "Vacant", "Blank", "Bare", "Void", "Hollow"], ["Secure", 8, "Precarious", "Firm", "Solid", "Rigid", "Tough", "Strong"], ["Delicate", 8, "Coarse", "Weak", "Faint", "Feeble", "Fragile", "Infirm"], ["Stretched", 8, "Lax", "Taut", "Tight", "Secure", "Fast", "Snug"], ["Wide", 8, "Straitened", "Roomy", "Spacious", "Extensive", "Ample", "Broad"], ["Biting", 8, "Balmy", "Gelid", "Icy", "Frigid", "Algid", "Bitter"], ["Enraged", 8, "Serene", "Angered", "Wrathful", "Infuriated", "Irate", "Incensed"], ["Certain", 8, "Dubious", "Secure", "Guarded", "Shielded", "Protected", "Harmless"], ["Concentrated", 8, "Diluted", "Dense", "Heavy", "Solid", "Compact", "Thick"], ["Equitable", 8, "Unjust", "Fair", "Just", "Honest", "Direct", "Candid"], ["Proud", 8, "Deferential", "Arrogant", "Exalted", "Majestic", "Sublime", "Imperious"], ["Arrogant", 8, "Submissive", "Exalted", "Majestic", "Sublime", "Imperious", "Haughty"], ["Mammoth", 8, "Lilliputian", "Huge", "Enormous", "Massive", "Gigantic", "Colossal"], ["Austere", 8, "Sybaritic", "Harsh", "Severe", "Stern", "Strict", "Rigid"], ["Severe", 8, "Indulgent", "Grave", "Serious", "Solemn", "Earnest", "Somber"],
+            ["Discerning", 9, "Obtuse", "Sagacious", "Perspicacious", "Astute", "Sharp", "Crafty"], ["Rapid", 9, "Torpid", "Swift", "Fleet", "Speedy", "Prompt", "Quick"], ["Mammoth", 9, "Ephemeral", "Tremendous", "Prodigious", "Immense", "Enormous", "Massive"], ["Tranquil", 9, "Tumultuous", "Untroubled", "Placid", "Calm", "Peaceful", "Serene"], ["Audacious", 9, "Timid", "Dauntless", "Resolute", "Valiant", "Intrepid", "Daring"], ["Defective", 9, "Pristine", "Faulty", "Flawed", "Incorrect", "Untrue", "Erroneous"], ["Timely", 9, "Anachronistic", "Progressive", "Forward", "Advanced", "Punctual", "Seasonable"], ["Serene", 9, "Disturbed", "Compliant", "Submissive", "Meek", "Subdued", "Placid"], ["Penetrating", 9, "Superficial", "Sharp", "Acute", "Edged", "Piercing", "Incisive"], ["Horizontal", 9, "Vertical", "Level", "Flat", "Slick", "Polished", "Uniform"], ["Vacant", 9, "Occupied", "Blank", "Bare", "Void", "Hollow", "Empty"], ["Firm", 9, "Unstable", "Solid", "Rigid", "Tough", "Strong", "Secure"], ["Weak", 9, "Potent", "Faint", "Feeble", "Fragile", "Infirm", "Delicate"], ["Taut", 9, "Loose", "Tight", "Secure", "Fast", "Snug", "Stretched"], ["Roomy", 9, "Incommodious", "Spacious", "Extensive", "Ample", "Broad", "Wide"], ["Gelid", 9, "Torrid", "Icy", "Frigid", "Algid", "Bitter", "Biting"], ["Angered", 9, "Pacified", "Wrathful", "Infuriated", "Irate", "Incensed", "Enraged"], ["Secure", 9, "Perilous", "Guarded", "Shielded", "Protected", "Harmless", "Certain"], ["Dense", 9, "Dissipated", "Heavy", "Solid", "Compact", "Thick", "Concentrated"], ["Fair", 9, "Partisan", "Just", "Honest", "Direct", "Candid", "Equitable"], ["Exalted", 9, "Abased", "Majestic", "Sublime", "Imperious", "Haughty", "Proud"], ["Majestic", 9, "Plebeian", "Sublime", "Imperious", "Haughty", "Proud", "Arrogant"], ["Huge", 9, "Atomic", "Enormous", "Massive", "Gigantic", "Colossal", "Mammoth"], ["Harsh", 9, "Genial", "Severe", "Stern", "Strict", "Rigid", "Austere"], ["Grave", 9, "Facetious", "Serious", "Solemn", "Earnest", "Somber", "Severe"],
+            ["Sagacious", 10, "Fatuous", "Perspicacious", "Astute", "Sharp", "Crafty", "Cunning"], ["Swift", 10, "Languid", "Fleet", "Speedy", "Prompt", "Quick", "Rapid"], ["Tremendous", 10, "Negligible", "Prodigious", "Immense", "Enormous", "Massive", "Gigantic"], ["Untroubled", 10, "Dysphoric", "Placid", "Calm", "Peaceful", "Serene", "Tranquil"], ["Dauntless", 10, "Pusillanimous", "Resolute", "Valiant", "Intrepid", "Daring", "Audacious"], ["Faulty", 10, "Impeccable", "Flawed", "Incorrect", "Untrue", "Erroneous", "Defective"], ["Progressive", 10, "Retrograde", "Forward", "Advanced", "Punctual", "Seasonable", "Timely"], ["Compliant", 10, "Recalcitrant", "Submissive", "Meek", "Subdued", "Placid", "Serene"], ["Sharp", 10, "Obtuse", "Acute", "Edged", "Piercing", "Incisive", "Penetrating"], ["Level", 10, "Oblique", "Flat", "Slick", "Polished", "Uniform", "Horizontal"], ["Blank", 10, "Replete", "Bare", "Void", "Hollow", "Empty", "Vacant"], ["Solid", 10, "Amorphous", "Rigid", "Tough", "Strong", "Secure", "Firm"], ["Feeble", 10, "Invincible", "Fragile", "Infirm", "Delicate", "Weak", "Faint"], ["Tight", 10, "Lax", "Secure", "Fast", "Snug", "Stretched", "Taut"], ["Spacious", 10, "Cloistered", "Extensive", "Ample", "Broad", "Wide", "Roomy"], ["Icy", 10, "Hyperpyretic", "Frigid", "Algid", "Bitter", "Biting", "Gelid"], ["Wrathful", 10, "Halcyon", "Infuriated", "Irate", "Incensed", "Enraged", "Angered"], ["Guarded", 10, "Vulnerable", "Shielded", "Protected", "Harmless", "Certain", "Secure"], ["Solid", 10, "Aerated", "Compact", "Thick", "Concentrated", "Dense", "Heavy"], ["Just", 10, "Inequitable", "Honest", "Direct", "Candid", "Equitable", "Fair"], ["Sublime", 10, "Ignoble", "Imperious", "Haughty", "Proud", "Arrogant", "Exalted"], ["Imperious", 10, "Obsequious", "Haughty", "Proud", "Arrogant", "Exalted", "Majestic"], ["Enormous", 10, "Infinitesimal", "Massive", "Gigantic", "Colossal", "Mammoth", "Tremendous"], ["Stern", 10, "Indulgent", "Rigid", "Austere", "Harsh", "Severe", "Stern"], ["Serious", 10, "Frivolous", "Earnest", "Somber", "Severe", "Grave", "Serious"],
+            ["Perspicacious", 11, "Vacuous", "Astute", "Sharp", "Crafty", "Cunning", "Discerning"], ["Fleet", 11, "Sluggish", "Speedy", "Prompt", "Quick", "Rapid", "Swift"], ["Prodigious", 11, "Piddling", "Immense", "Enormous", "Massive", "Gigantic", "Colossal"], ["Placid", 11, "Turbulent", "Calm", "Peaceful", "Serene", "Tranquil", "Untroubled"], ["Resolute", 11, "Vacillating", "Valiant", "Intrepid", "Daring", "Audacious", "Dauntless"], ["Flawed", 11, "Maculate", "Incorrect", "Untrue", "Erroneous", "Defective", "Faulty"], ["Advanced", 11, "Primitive", "Punctual", "Seasonable", "Timely", "Progressive", "Forward"], ["Submissive", 11, "Insubordinate", "Meek", "Subdued", "Placid", "Serene", "Compliant"], ["Acute", 11, "Blunted", "Edged", "Piercing", "Incisive", "Penetrating", "Sharp"], ["Flat", 11, "Scabrous", "Slick", "Polished", "Uniform", "Horizontal", "Level"], ["Bare", 11, "Crowded", "Void", "Hollow", "Empty", "Vacant", "Blank"], ["Rigid", 11, "Malleable", "Tough", "Strong", "Secure", "Firm", "Solid"], ["Fragile", 11, "Indestructible", "Infirm", "Delicate", "Weak", "Faint", "Feeble"], ["Secure", 11, "Hazardous", "Fast", "Snug", "Stretched", "Taut", "Tight"], ["Extensive", 11, "Circumscribed", "Ample", "Broad", "Wide", "Roomy", "Spacious"], ["Frigid", 11, "Sizzling", "Algid", "Bitter", "Biting", "Gelid", "Icy"], ["Infuriated", 11, "Placated", "Irate", "Incensed", "Enraged", "Angered", "Wrathful"], ["Protected", 11, "Exposed", "Harmless", "Certain", "Secure", "Guarded", "Shielded"], ["Compact", 11, "Dispersed", "Thick", "Concentrated", "Dense", "Heavy", "Solid"], ["Direct", 11, "Circuitous", "Candid", "Equitable", "Fair", "Just", "Honest"], ["Haughty", 11, "Deferential", "Proud", "Arrogant", "Exalted", "Majestic", "Sublime"], ["Proud", 11, "Servile", "Arrogant", "Exalted", "Majestic", "Sublime", "Imperious"], ["Gigantic", 11, "Puny", "Colossal", "Mammoth", "Tremendous", "Prodigious", "Immense"], ["Strict", 11, "Permissive", "Austere", "Harsh", "Severe", "Stern", "Strict"], ["Somber", 11, "Festive", "Grave", "Serious", "Solemn", "Earnest", "Somber"],
+            ["Astute", 12, "Fatuous", "Acuminous", "Sharp", "Crafty", "Cunning", "Discerning"], ["Speedy", 12, "Dilatory", "Expeditious", "Prompt", "Quick", "Rapid", "Swift"], ["Immense", 12, "Exiguous", "Brobdingnagian", "Enormous", "Massive", "Gigantic", "Colossal"], ["Calm", 12, "Frenzied", "Imperturbable", "Peaceful", "Serene", "Tranquil", "Untroubled"], ["Valiant", 12, "Poltroonish", "Leonine", "Intrepid", "Daring", "Audacious", "Dauntless"], ["Incorrect", 12, "Veracious", "Fallacious", "Flawed", "Incorrect", "Untrue", "Erroneous"], ["Punctual", 12, "Remiss", "Expeditious", "Timely", "Progressive", "Forward", "Advanced"], ["Meek", 12, "Contumacious", "Acquiescent", "Subdued", "Placid", "Serene", "Compliant"], ["Edged", 12, "Obtuse", "Cultrated", "Piercing", "Incisive", "Penetrating", "Sharp"], ["Slick", 12, "Rugose", "Glabrous", "Uniform", "Horizontal", "Level", "Flat"], ["Void", 12, "Plethoric", "Inane", "Empty", "Vacant", "Blank", "Bare"], ["Tough", 12, "Friable", "Adamantine", "Secure", "Firm", "Solid", "Rigid"], ["Infirm", 12, "Stalwart", "Decrepit", "Weak", "Faint", "Feeble", "Fragile"], ["Fast", 12, "Voluble", "Tenacious", "Stretched", "Taut", "Tight", "Secure"], ["Ample", 12, "Exiguous", "Capacious", "Spacious", "Extensive", "Ample", "Broad"], ["Algid", 12, "Torrential", "Gelid", "Bitter", "Biting", "Gelid", "Icy"], ["Irate", 12, "Pacific", "Choleric", "Incensed", "Enraged", "Angered", "Wrathful"], ["Harmless", 12, "Deleterious", "Innocuous", "Certain", "Secure", "Guarded", "Shielded"], ["Thick", 12, "Tenuous", "Condensed", "Dense", "Heavy", "Solid", "Compact"], ["Candid", 12, "Mendacious", "Veracious", "Fair", "Just", "Honest", "Direct"], ["Majestic", 12, "Ignoble", "August", "Imperious", "Haughty", "Proud", "Arrogant"], ["Sublime", 12, "Transcendent", "Ethereal", "Haughty", "Proud", "Arrogant", "Exalted"], ["Colossal", 12, "Infinitesimal", "Gargantuan", "Huge", "Enormous", "Massive", "Gigantic"], ["Rigid", 12, "Plastic", "Inflexible", "Harsh", "Severe", "Stern", "Strict"], ["Earnest", 12, "Flippant", "Solemn", "Severe", "Grave", "Serious", "Solemn"]
+        ];
+
+        // Architectural States
+        let currentLevel = 1;
+        let currentStack = [];
+        let completedInStackCount = 0;
+        let totalInStackCount = 0;
+        let currentActiveWordObj = null;
+
+        // Clock Systems
+        let roundTimerInterval = null;
+        let stackTimerInterval = null;
+        let elapsedRoundSeconds = 0.0;
+        let elapsedStackSeconds = 0.0;
+
+        // Pre-loaded benchmarks mimicking standard performance targets
+        const SYSTEM_DEFAULT_BENCHMARKS = [
+            { initials: "TOM", time: 48.2 },
+            { initials: "JED", time: 55.4 },
+            { initials: "ANN", time: 61.0 },
+            { initials: "LIZ", time: 66.8 },
+            { initials: "BOB", time: 72.3 },
+            { initials: "MAX", time: 78.5 },
+            { initials: "KAY", time: 84.1 },
+            { initials: "ALX", time: 90.4 },
+            { initials: "SAM", time: 99.2 },
+            { initials: "VIC", time: 112.5 }
+        ];
+
+        // Seed Default Highscore lists inside engine initialization stage
+        function seedLeaderboardsIfEmpty() {
+            for (let l = 1; l <= 12; l++) {
+                if (!localStorage.getItem(`antonym_arcade_lvl_${l}`)) {
+                    let randomizedList = SYSTEM_DEFAULT_BENCHMARKS.map(item => ({
+                        initials: item.initials,
+                        time: parseFloat((item.time + (Math.random() * 8.5)).toFixed(1))
+                    }));
+                    randomizedList.sort((a, b) => a.time - b.time);
+                    localStorage.setItem(`antonym_arcade_lvl_${l}`, JSON.stringify(randomizedList));
+                }
+            }
+        }
+
+        // Screen routing controllers
+        function switchView(targetViewId) {
+            document.querySelectorAll('.screen-view').forEach(view => {
+                view.classList.remove('active');
+            });
+            document.getElementById(targetViewId).classList.add('active');
+        }
+
+        function announceToScreenReader(text) {
+            document.getElementById('aria-announcer').textContent = text;
+        }
+
+        // Engine Level Initialization Routine
+        function initiateLevel(levelNumber) {
+            currentLevel = levelNumber;
+            document.getElementById('hud-level').textContent = currentLevel;
+
+            // Build stack allocations filtered by parsing selected level profile
+            let levelWords = VOCABULARY_DATASET.filter(row => row[1] === currentLevel);
+
+            // Map records structurally to game architecture configurations
+            currentStack = levelWords.map(row => ({
+                word: row[0],
+                antonym: row[2],
+                synonyms: [row[3], row[4], row[5], row[6], row[7]]
+            }));
+
+            // Shuffle array inputs natively
+            currentStack.sort(() => Math.random() - 0.5);
+
+            completedInStackCount = 0;
+            totalInStackCount = currentStack.length;
+            elapsedStackSeconds = 0.0;
+
+            document.getElementById('hud-progress').textContent = `${completedInStackCount} / ${totalInStackCount}`;
+            document.getElementById('hud-stack-time').textContent = `0.0s`;
+
+            // Reset and trigger stack clocks
+            clearInterval(stackTimerInterval);
+            stackTimerInterval = setInterval(() => {
+                elapsedStackSeconds += 0.1;
+                document.getElementById('hud-stack-time').textContent = elapsedStackSeconds.toFixed(1) + 's';
+            }, 100);
+
+            switchView('view-arena');
+            nextRound();
+            announceToScreenReader(`Level ${currentLevel} started. Stack loaded with ${totalInStackCount} words.`);
+        }
+
+        // Advance to subsequent word loop
+        function nextRound() {
+            if (currentStack.length === 0) {
+                concludeLevelStack();
+                return;
+            }
+
+            currentActiveWordObj = currentStack.shift();
+            document.getElementById('current-target-word').textContent = currentActiveWordObj.word;
+
+            // Construct mixed configuration of choices (1 Antonym + 5 Distractors)
+            let choices = [
+                { text: currentActiveWordObj.antonym, isCorrect: true },
+                ...currentActiveWordObj.synonyms.map(s => ({ text: s, isCorrect: false }))
+            ];
+
+            // Randomize position order cleanly
+            choices.sort(() => Math.random() - 0.5);
+
+            const optionsBox = document.getElementById('options-box');
+            optionsBox.innerHTML = '';
+
+            choices.forEach((choice, idx) => {
+                const uniqueId = `opt-${idx}`;
+                const label = document.createElement('label');
+                label.className = 'option-label';
+                label.setAttribute('for', uniqueId);
+
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'antonym-selection';
+                radio.id = uniqueId;
+                radio.value = choice.text;
+                radio.dataset.correct = choice.isCorrect;
+                radio.required = true;
+
+                if (idx === 0) {
+                    radio.autofocus = true;
+                }
+
+                const txtNode = document.createTextNode(choice.text);
+
+                label.appendChild(radio);
+                label.appendChild(txtNode);
+                optionsBox.appendChild(label);
+            });
+
+            // Initialize word level execution timers
+            elapsedRoundSeconds = 0.0;
+            document.getElementById('hud-round-time').textContent = `0.0s`;
+            clearInterval(roundTimerInterval);
+            roundTimerInterval = setInterval(() => {
+                elapsedRoundSeconds += 0.1;
+                document.getElementById('hud-round-time').textContent = elapsedRoundSeconds.toFixed(1) + 's';
+            }, 100);
+        }
+
+        // Evaluate submitted user inputs
+        function evaluateSubmission(event) {
+            event.preventDefault();
+            clearInterval(roundTimerInterval);
+
+            const selectedInput = document.querySelector('input[name="antonym-selection"]:checked');
+            if (!selectedInput) return;
+
+            const isCorrect = selectedInput.dataset.correct === "true";
+            const chosenText = selectedInput.value;
+            const feedbackPanel = document.getElementById('feedback-panel');
+            const titleEl = document.getElementById('feedback-msg-title');
+            const descEl = document.getElementById('feedback-msg-desc');
+
+            feedbackPanel.removeAttribute('aria-hidden');
+
+            if (isCorrect) {
+                completedInStackCount++;
+                document.getElementById('hud-progress').textContent = `${completedInStackCount} / ${totalInStackCount}`;
+
+                feedbackPanel.className = "feedback-overlay flash-correct";
+                titleEl.textContent = "SUCCESS";
+                descEl.textContent = `Correct! "${chosenText}" is the antonym.`;
+                announceToScreenReader(`Correct! ${chosenText} is the antonym.`);
+
+                setTimeout(() => {
+                    feedbackPanel.className = "feedback-overlay";
+                    feedbackPanel.setAttribute('aria-hidden', 'true');
+                    nextRound();
+                }, 1100);
+
+            } else {
+                // Reinsert problem sequence item to bottom of stack matrix on fail state
+                currentStack.push(currentActiveWordObj);
+
+                feedbackPanel.className = "feedback-overlay flash-incorrect";
+                titleEl.textContent = "MISSED";
+                descEl.textContent = `You selected "${chosenText}". Correct Antonym was: "${currentActiveWordObj.antonym}". Word returned to back of stack.`;
+                announceToScreenReader(`Incorrect. You selected ${chosenText}. The correct antonym was ${currentActiveWordObj.antonym}. Word pushed to end of stack.`);
+
+                setTimeout(() => {
+                    feedbackPanel.className = "feedback-overlay";
+                    feedbackPanel.setAttribute('aria-hidden', 'true');
+                    nextRound();
+                }, 2800);
+            }
+        }
+
+        // Halting criteria state transition
+        function concludeLevelStack() {
+            clearInterval(roundTimerInterval);
+            clearInterval(stackTimerInterval);
+            announceToScreenReader(`Stack cleared! Total time elapsed: ${elapsedStackSeconds.toFixed(1)} seconds. Entering score registry.`);
+            switchView('view-registry');
+            document.getElementById('player-initials').focus();
+        }
+
+        // Record initialization metrics inside storage systems
+        function commitRegistryScore() {
+            const inputEl = document.getElementById('player-initials');
+            let initials = inputEl.value.trim().toUpperCase();
+
+            if (initials.length === 0) {
+                initials = "AAA";
+            }
+
+            let records = JSON.parse(localStorage.getItem(`antonym_arcade_lvl_${currentLevel}`)) || [];
+            records.push({
+                initials: initials,
+                time: parseFloat(elapsedStackSeconds.toFixed(1))
+            });
+
+            // Sort ascending by lowest execution time
+            records.sort((a, b) => a.time - b.time);
+
+            // Limit to top 10 arcade tracks
+            records = records.slice(0, 10);
+            localStorage.setItem(`antonym_arcade_lvl_${currentLevel}`, JSON.stringify(records));
+
+            inputEl.value = "";
+            renderLeaderboardScreen(currentLevel);
+        }
+
+        // Output scores visually via tabular elements
+        function renderLeaderboardScreen(level) {
+            const titleEl = document.getElementById('leaderboard-view-title');
+            titleEl.textContent = `HIGH SCORES: LEVEL ${level}`;
+
+            const records = JSON.parse(localStorage.getItem(`antonym_arcade_lvl_${level}`)) || [];
+            const tbody = document.getElementById('leaderboard-rows');
+            tbody.innerHTML = '';
+
+            records.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${idx + 1}</td>
+                    <td><strong>${row.initials}</strong></td>
+                    <td>${row.time.toFixed(1)}s</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            switchView('view-leaderboard');
+        }
+
+        function showGlobalLeaderboards() {
+            renderLeaderboardScreen(currentLevel);
+        }
+
+        function exitToMainMenu() {
+            switchView('view-level-select');
+            announceToScreenReader("Returned to main menu.");
+        }
+
+        // Initialization hook
+        window.addEventListener('DOMContentLoaded', () => {
+            seedLeaderboardsIfEmpty();
+        });
+    </script>
+</body>
+
+</html>
